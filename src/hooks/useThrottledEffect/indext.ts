@@ -1,37 +1,38 @@
 import React from "react";
 
-interface UseDebouncedEffectProps {
+interface UseThrottledEffectProps {
   callback: () => Function | void;
   delay: number;
   deps: [any];
 }
 
-export function useDebouncedEffect(
+export function useThrottledEffect(
   callback = () => {},
   delay = 200,
   deps = []
-): UseDebouncedEffectProps {
-  const [isDebouncing, setIsDebouncing] = React.useState(false);
-
+): UseThrottledEffectProps {
+  const [isThrottling, setIsThrottling] = React.useState(false);
   const timerRef = React.useRef(null);
   const isFirstRun = React.useRef(true);
 
   const runCallbackAfterDelay = React.useCallback(() => {
-    setIsDebouncing(true);
+    setIsThrottling(true);
 
-    if (timerRef.current) clearTimeout(timerRef.current);
+    if (timerRef.current) return;
 
     timerRef.current = setTimeout(() => {
-      setIsDebouncing(false);
+      setIsThrottling(false);
       callback();
+      timerRef.current = null;
     }, delay);
   }, deps);
 
   React.useEffect(() => {
     if (!isFirstRun.current) runCallbackAfterDelay();
     else isFirstRun.current = false;
+
     return () => timerRef.current && clearTimeout(timerRef.current);
   }, deps);
 
-  return isDebouncing;
+  return isThrottling;
 }
